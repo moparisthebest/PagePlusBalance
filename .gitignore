@@ -1,0 +1,16 @@
+# editor backup files
+*~
+
+# maven artifacts
+target/
+
+# eclipse artifacts
+bin/
+gen/
+.classpath
+.project
+
+# idea project files
+.idea/
+*.iml
+*.eml
