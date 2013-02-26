@@ -20,7 +20,6 @@ package org.moparisthebest.pageplus.server;
 
 import org.moparisthebest.pageplus.plugins.PPInfo;
 
-import javax.net.ssl.SSLServerSocket;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -35,10 +34,10 @@ public class Main extends Thread {
 		// System.setProperty("javax.net.ssl.keyStorePassword", "dvorak");
 		// System.setProperty("javax.net.debug", "ssl");
 
-		String address = "69.39.224.53";
+		String address = "66.55.93.152";
 		int port = 1337;
 		final ServerSocket sSocket;
-		final SSLServerSocket sslSocket;
+		//final SSLServerSocket sslSocket;
 		try {
 			sSocket = new ServerSocket(port, 0, InetAddress.getByName(address));
 			System.out.println("Listening on " + address + ":" + port);

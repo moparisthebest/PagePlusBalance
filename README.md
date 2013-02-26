@@ -1,9 +1,24 @@
-PagePlusBalance v0.3
+PagePlusBalance v0.4
 ===========================
 PagePlusBalance retrieves your balance from PagePlusCellular.com, currently for android phones.
 
 Author: Travis Burtrum (moparisthebest)  
 Email: android@moparisthebest.org
+
+Features:
+----------------------
+1. Gets your balance directly from PagePlusCellular.com,
+saving bandwidth by making fewer requests than a browser
+could and not downloading any javascript, css, or images
+that a browser would.
+2. Optionally, over mobile data, will send your details
+to a service on my server that uses the same code to grab
+your balance from Page Plus as the android app and sending
+you back only the data you want as plain text, saving you
+a substantial amount of bandwidth.
+3. Stores your balance on your phone along with the last
+time you refreshed it.
+4. Open source under GNU/AGPL!
 
 How to comply with License:
 ----------------------
@@ -36,4 +51,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 TODO:
 ----------------------
-1. Update for new PagePlusCellular.com website that broke parser.
+1. You suggest it, via a github issue or email!

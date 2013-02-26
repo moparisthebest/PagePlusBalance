@@ -32,8 +32,10 @@ public class PagePlusClient {
 		//pp = new org.moparisthebest.pageplus.plugins.PPServer();
 
 		pp.grabData(args);
-		for (int x = 0; x < PPInfo.names.length; ++x)
-			System.out.println(PPInfo.names[x] + ": " + pp.info[x]);
+
+		if (pp.info != null)
+			for (int x = 0; x < PPInfo.names.length; ++x)
+				System.out.println(PPInfo.names[x] + ": " + pp.info[x]);
 	}
 
 }

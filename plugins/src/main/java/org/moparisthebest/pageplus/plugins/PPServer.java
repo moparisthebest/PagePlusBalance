@@ -40,8 +40,8 @@ public class PPServer extends PPInfo {
 	 */
 	public static final boolean useGzip = false;
 	public static final boolean useSSL = false;
-	// 69.39.224.53 is android.moparisthebest.org, it saves a little data not having to do the DNS lookup
-	private String address = "69.39.224.53";
+	// 66.55.93.152 is android.moparisthebest.org, it saves a little data not having to do the DNS lookup
+	private String address = "66.55.93.152";
 	private int port = 1337;
 
 	@Override
