@@ -1,4 +1,4 @@
-PagePlusBalance v0.4
+PagePlusBalance v0.5
 ===========================
 PagePlusBalance retrieves your balance from PagePlusCellular.com, currently for android phones.
 
@@ -16,9 +16,11 @@ to a service on my server that uses the same code to grab
 your balance from Page Plus as the android app and sending
 you back only the data you want as plain text, saving you
 a substantial amount of bandwidth.
-3. Stores your balance on your phone along with the last
+3. Now supports getting your balance by automatically
+sending a text of BAL to 7243, and parsing the response.
+4. Stores your balance on your phone along with the last
 time you refreshed it.
-4. Open source under GNU/AGPL!
+5. Open source under GNU/AGPL!
 
 How to comply with License:
 ----------------------
