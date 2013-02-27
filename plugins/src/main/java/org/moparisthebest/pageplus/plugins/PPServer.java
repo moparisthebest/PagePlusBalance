@@ -18,10 +18,13 @@
 
 package org.moparisthebest.pageplus.plugins;
 
+import org.moparisthebest.pageplus.dto.Balance;
+
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
+import java.util.Date;
 import java.util.zip.GZIPOutputStream;
 
 public class PPServer extends PPInfo {
@@ -40,54 +43,62 @@ public class PPServer extends PPInfo {
 	 */
 	public static final boolean useGzip = false;
 	public static final boolean useSSL = false;
-	// 66.55.93.152 is android.moparisthebest.org, it saves a little data not having to do the DNS lookup
-	private String address = "66.55.93.152";
-	private int port = 1337;
+	// this is android.moparisthebest.org, it saves a little data not having to do the DNS lookup
+	public static final String address = "66.55.93.152";
+	//public static final String address = "127.0.0.1"; // for testing
+	public static final int port = 1337;
+	public static final int sslPort = 1338;
 
 	@Override
-	public void grabData(String user, String pass, String phone) throws Exception {
+	public Balance grabData(String user, String pass, String phone) {
 		//System.setProperty("javax.net.ssl.trustStore", "/home/mopar/workspace/PagePlusClient/pageplus");
 		//System.setProperty("javax.net.ssl.trustStorePassword", "dvorak");
 		//System.setProperty("javax.net.debug", "ssl");
 
-		Socket s;
-		if (useSSL)
-			s = SSLSocketFactory.getDefault().createSocket(InetAddress.getByName(address), port + 1);
-		else
-			s = new Socket(InetAddress.getByName(address), port);
+		try {
+			Socket s;
+			if (useSSL)
+				s = SSLSocketFactory.getDefault().createSocket(InetAddress.getByName(address), sslPort);
+			else
+				s = new Socket(InetAddress.getByName(address), port);
 
-		OutputStream os = s.getOutputStream();
-		InputStream is = s.getInputStream();
-		if (useGzip) {
-			os = new java.util.zip.GZIPOutputStream(os);
-			is = new java.util.zip.GZIPInputStream(is);
-		}
+			OutputStream os = s.getOutputStream();
+			InputStream is = s.getInputStream();
+			if (useGzip) {
+				os = new java.util.zip.GZIPOutputStream(os);
+				is = new java.util.zip.GZIPInputStream(is);
+			}
+
 /*		DataOutputStream out = new DataOutputStream(os);
 		DataInputStream in = new DataInputStream(is);
 		out.writeUTF(user);
 		out.writeUTF(pass);
 		out.writeUTF(phone);
 */
-		BufferedWriter out = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
-		BufferedReader in = new BufferedReader(new InputStreamReader(is, "UTF-8"));
-		out.write(user + "\n");
-		out.write(pass + "\n");
-		out.write(phone + "\n");
+			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(os, "UTF-8"));
+			out.write(user + "\n");
+			out.write(pass + "\n");
+			out.write(phone + "\n");
 
-		out.flush();
-		if (useGzip)
-			((GZIPOutputStream) os).finish();
+			out.flush();
+			if (useGzip)
+				((GZIPOutputStream) os).finish();
 
-		info = new String[5];
-		for (int x = 0; x < info.length; ++x) {
-			info[x] = in.readLine();
-			// first line will be 'e' if there is an error, next line is the error message
-			if (x == 0 && info[x].equals("e"))
-				throw new Exception(in.readLine());
-			//info[x] = in.readUTF();
+			ByteArrayOutputStream baos = new ByteArrayOutputStream();
+			byte[] buffer = new byte[1024];
+			int length = 0;
+			while ((length = is.read(buffer)) != -1)
+				baos.write(buffer, 0, length);
+			Balance ret = new Balance(new String(baos.toByteArray()));
+			// one little trick, the server doesn't send the date because it might not be the same as OUR date, so if
+			// error is null, set the date to a current one
+			if (ret.error == null)
+				ret.successDate = new Date();
+			return ret;
+		} catch (Throwable e) {
+			//e.printStackTrace();
+			return new Balance().setError(e.getMessage());
 		}
-
-		s.close();
 	}
 
 }

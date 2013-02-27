@@ -19,12 +19,14 @@
 
 <resources>
     <string name="app_name">Page Plus Balance</string>
-    <string name="plan_data">No Data Yet\nBalance:\nPlan:\nMinutes:\nTexts:\nData:\n</string>
+    <string name="plan_data">Balance:\nPlan:\nMinutes:\nSMS:\nData:\nLast Updated: Never\n</string>
 
     <string name="username">Username:</string>
     <string name="password">Password:</string>
     <string name="phone">Phone name:</string>
-    <string name="button">Save / Grab Data</string>
+    <string name="button">Save / Grab Data via website</string>
 
-    <string name="pp_only">Use only pageplus\' website (uses significantly more data)</string>
+    <string name="pp_only">Use only pagepluscellular.com (uses significantly more data)</string>
+
+    <string name="sms_grab">Grab Data via SMS</string>
 </resources>

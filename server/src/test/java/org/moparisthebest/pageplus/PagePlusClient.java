@@ -18,7 +18,10 @@
 
 package org.moparisthebest.pageplus;
 
+import org.moparisthebest.pageplus.dto.Balance;
 import org.moparisthebest.pageplus.plugins.PPInfo;
+
+import java.util.Arrays;
 
 public class PagePlusClient {
 
@@ -28,14 +31,18 @@ public class PagePlusClient {
 			return;
 		}
 		PPInfo pp;
-		pp = new org.moparisthebest.pageplus.plugins.PagePlusHTTP();
-		//pp = new org.moparisthebest.pageplus.plugins.PPServer();
+		//pp = new org.moparisthebest.pageplus.plugins.PagePlusHTTP();
+		pp = new org.moparisthebest.pageplus.plugins.PPServer();
 
-		pp.grabData(args);
-
-		if (pp.info != null)
-			for (int x = 0; x < PPInfo.names.length; ++x)
-				System.out.println(PPInfo.names[x] + ": " + pp.info[x]);
+		Balance b = pp.grabData(args);
+		System.out.println("original balance:");
+		System.out.println(b);
+		System.out.println("compact balance:");
+		String compactBalance = b.compactFormat();
+		System.out.println(compactBalance);
+		System.out.println(Arrays.toString(compactBalance.split("\n")));
+		System.out.println("balance from compact balance:");
+		System.out.println(new Balance(compactBalance));
 	}
 
 }

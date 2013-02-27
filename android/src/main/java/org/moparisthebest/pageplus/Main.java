@@ -20,10 +20,11 @@ package org.moparisthebest.pageplus;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.SharedPreferences;
+import android.content.*;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.telephony.SmsManager;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -31,20 +32,35 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
-
-import java.util.Date;
+import org.moparisthebest.pageplus.dto.Balance;
+import org.moparisthebest.pageplus.plugins.PPInfo;
 
 public class Main extends Activity {
 
 	public static final String PREFS_NAME = "page_plus", USER = "user", PASS = "pass",
-			PHONE = "phone", ERROR = "error", DATE = "date", PP_ONLY = "pp_only", EMPTY = "";
+			PHONE = "phone", PP_ONLY = "pp_only", EMPTY = "";
 
-	private Button closeButton;
+	public static final String PP_BAL_RECEIVED_ACTION = "PP_BAL_RECEIVED_ACTION";
+	public static final String BALANCE = "BALANCE_COMPACT";
+
 	private EditText username, password, phone;
 	private CheckBox pp_only;
 	private TextView plan_data;
 	private SharedPreferences settings;
 	private Context thisContext;
+
+	private ProgressDialog pd;
+
+	private IntentFilter intentFilter;
+	private BroadcastReceiver intentReceiver = new BroadcastReceiver() {
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			populateData(intent.getExtras().getString(BALANCE));
+			if (pd != null && pd.isShowing())
+				pd.dismiss();
+		}
+	};
+
 
 	/**
 	 * Called when the activity is first created.
@@ -66,7 +82,7 @@ public class Main extends Activity {
 
 		this.settings = getSharedPreferences(PREFS_NAME, 0);
 
-		populate_data();
+		populateData();
 
 		this.username.setText(this.settings.getString(USER, EMPTY));
 		this.password.setText(this.settings.getString(PASS, EMPTY));
@@ -74,8 +90,21 @@ public class Main extends Activity {
 
 		this.pp_only.setChecked(this.settings.getBoolean(PP_ONLY, false));
 
-		this.closeButton = (Button) this.findViewById(R.id.save);
-		this.closeButton.setOnClickListener(new OnClickListener() {
+		this.pd = new ProgressDialog(thisContext);
+		pd.setProgressStyle(ProgressDialog.STYLE_SPINNER);
+		pd.setIndeterminate(true);
+					/*
+					pd.setOnDismissListener(new DialogInterface.OnDismissListener() {
+						public void onDismiss(DialogInterface dialog) {
+							populateData();
+						}
+					});*/
+
+		intentFilter = new IntentFilter();
+		intentFilter.addAction(PP_BAL_RECEIVED_ACTION);
+
+		Button saveButton = (Button) this.findViewById(R.id.save);
+		saveButton.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
 				final SharedPreferences.Editor editor = settings.edit();
@@ -90,37 +119,44 @@ public class Main extends Activity {
 				editor.commit();
 
 				try {
-					final ProgressDialog pd = new ProgressDialog(thisContext);
-					pd.setProgressStyle(ProgressDialog.STYLE_SPINNER);
 					pd.setTitle("Grabbing data...");
 					pd.setMessage("be patient");
-					pd.setIndeterminate(true);
-					pd.setOnDismissListener(new DialogInterface.OnDismissListener() {
-						public void onDismiss(DialogInterface dialog) {
-							populate_data();
-						}
-					});
 					pd.show();
 					// final Handler pdHandler = new Handler();
 					new Thread(new Runnable() {
 						public void run() {
-
-							try {
-								new AndroidPPInfo(thisContext).grabData();
-								editor.putString(DATE, new Date().toLocaleString());
-								editor.remove(ERROR);
-							} catch (Exception e) {
-								// TODO Auto-generated catch block
-								//e.printStackTrace();
-								editor.putString(ERROR, e.getMessage());
-							}
-							editor.commit();
-
-
-							pd.dismiss();
+							Balance balance = getBalance();
+							Intent broadcastIntent = new Intent();
+							broadcastIntent.setAction(Main.PP_BAL_RECEIVED_ACTION);
+							broadcastIntent.putExtra(Main.BALANCE, balance == null ? null : balance.compactFormat());
+							thisContext.sendBroadcast(broadcastIntent);
 						}
 					}).start();
+				} catch (Exception e) {
+					// grabbing data failed
+					// currently we just ignore this and go with the last data
+					//e.printStackTrace();
+					Log.i("PagePlus", Log.getStackTraceString(e));
+				}
 
+			}
+		});
+
+		Button smsButton = (Button) this.findViewById(R.id.sms);
+		smsButton.setOnClickListener(new OnClickListener() {
+			@Override
+			public void onClick(View v) {
+				try {
+					pd.setTitle("Sending SMS...");
+					pd.setMessage("and waiting for reply, be patient");
+					pd.show();
+					// final Handler pdHandler = new Handler();
+					new Thread(new Runnable() {
+						public void run() {
+							SmsManager sms = SmsManager.getDefault();
+							sms.sendTextMessage("7243", null, "BAL", null, null);
+						}
+					}).start();
 				} catch (Exception e) {
 					// grabbing data failed
 					// currently we just ignore this and go with the last data
@@ -133,6 +169,46 @@ public class Main extends Activity {
 
 	}
 
+	@Override
+	protected void onResume() {
+		registerReceiver(intentReceiver, intentFilter);
+		super.onResume();
+	}
+
+	@Override
+	protected void onPause() {
+		unregisterReceiver(intentReceiver);
+		super.onPause();
+	}
+
+	private Balance getBalance() {
+		NetworkInfo netInfo = ((ConnectivityManager) thisContext.getSystemService(Context.CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
+
+		if (netInfo == null || !netInfo.isConnected() || netInfo.isRoaming())
+			return null;
+
+		SharedPreferences settings = thisContext.getSharedPreferences(Main.PREFS_NAME, 0);
+
+		String user = settings.getString(Main.USER, Main.EMPTY);
+		if (user.equals(Main.EMPTY))
+			return new Balance().setError("Username cannot be empty.");
+		String pass = settings.getString(Main.PASS, Main.EMPTY);
+		if (pass.equals(Main.EMPTY))
+			return new Balance().setError("Password cannot be empty.");
+		String phone = settings.getString(Main.PHONE, Main.EMPTY);
+		// phone could be empty, I guess...
+
+		PPInfo pp;
+
+		if (netInfo.getType() == ConnectivityManager.TYPE_MOBILE && !settings.getBoolean(Main.PP_ONLY, false))
+			pp = new org.moparisthebest.pageplus.plugins.PPServer();
+		else // we are connected with wifi
+			pp = new org.moparisthebest.pageplus.plugins.PagePlusHTTP();
+
+		return pp.grabData(user, pass, phone);
+	}
+
+
 	public static void trim_input(EditText et) {
 		trim_input(et, false);
 	}
@@ -141,15 +217,25 @@ public class Main extends Activity {
 		et.setText(toLowerCase ? et.getText().toString().trim().toLowerCase() : et.getText().toString().trim());
 	}
 
-	private void populate_data() {
-		String data = "";
-		settings = getSharedPreferences(PREFS_NAME, 0);
-		// if there was an error, put that first:
-		if (settings.contains(ERROR))
-			data += "Error: " + settings.getString(ERROR, EMPTY) + "\nPrevious data:\n";
-		for (int x = 0; x < org.moparisthebest.pageplus.plugins.PPInfo.names.length; ++x)
-			data += org.moparisthebest.pageplus.plugins.PPInfo.names[x] + ": " + settings.getString(org.moparisthebest.pageplus.plugins.PPInfo.names[x], EMPTY) + "\n";
-		data += "Last Updated: " + settings.getString(DATE, EMPTY) + "\n";
-		plan_data.setText(data);
+	private synchronized void populateData(String balanceCompact) {
+		SharedPreferences.Editor editor = settings.edit();
+		Balance balance = new Balance(balanceCompact);
+		if (balance.error != null) {
+			// then there was an error and we want to save some info from the last successful attempt
+			balanceCompact = settings.getString(BALANCE, null);
+			if (balanceCompact != null)
+				balanceCompact = balance.copyFrom(new Balance(balanceCompact)).compactFormat();
+		}
+		editor.putString(BALANCE, balanceCompact);
+		editor.commit();
+		populateData(balance);
+	}
+
+	private synchronized void populateData(Balance balance) {
+		plan_data.setText(balance.toString());
+	}
+
+	private synchronized void populateData() {
+		populateData(new Balance(settings.getString(BALANCE, EMPTY)));
 	}
 }

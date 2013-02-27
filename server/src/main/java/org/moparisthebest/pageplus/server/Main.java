@@ -18,13 +18,18 @@
 
 package org.moparisthebest.pageplus.server;
 
+import org.moparisthebest.pageplus.dto.Balance;
 import org.moparisthebest.pageplus.plugins.PPInfo;
 
+import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLServerSocketFactory;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.zip.GZIPOutputStream;
+
+import static org.moparisthebest.pageplus.plugins.PPServer.*;
 
 public class Main extends Thread {
 
@@ -34,41 +39,48 @@ public class Main extends Thread {
 		// System.setProperty("javax.net.ssl.keyStorePassword", "dvorak");
 		// System.setProperty("javax.net.debug", "ssl");
 
-		String address = "66.55.93.152";
-		int port = 1337;
-		final ServerSocket sSocket;
-		//final SSLServerSocket sslSocket;
+		if (useSSL)
+			try {
+				final SSLServerSocket sslSocket = (SSLServerSocket)
+						SSLServerSocketFactory.getDefault().createServerSocket(sslPort, 0,
+								InetAddress.getByName(address));
+				System.out.println("Listening via SSL on " + address + ":" + sslPort);
+				// start new thread for SSL accepting
+				new Thread() {
+					public void run() {
+						while (true)
+							try {
+								new Main(sslSocket.accept());
+							} catch (IOException e) {
+								// e.printStackTrace();
+							}
+					}
+				}.start();
+			} catch (Exception e) {
+				System.out.println("Fatal Error listening on SSL:" + e.getMessage());
+				return;
+			}
+
 		try {
-			sSocket = new ServerSocket(port, 0, InetAddress.getByName(address));
+			final ServerSocket sSocket = new ServerSocket(port, 0, InetAddress.getByName(address));
 			System.out.println("Listening on " + address + ":" + port);
+			// use this thread to accept from regular socket
+			while (true)
+				try {
+					new Main(sSocket.accept());
+				} catch (IOException e) {
+					// e.printStackTrace();
+				}
 		} catch (Exception e) {
 			System.out.println("Fatal Error:" + e.getMessage());
 			return;
 		}
-		/*
-		 * try { sslSocket = (SSLServerSocket)
-		 * SSLServerSocketFactory.getDefault().createServerSocket(++port, 0,
-		 * InetAddress.getByName(address));
-		 * System.out.println("Listening via SSL on " + address + ":" + port); }
-		 * catch (Exception e) { System.out.println("Fatal Error:" +
-		 * e.getMessage()); return; } // start SSL accepting thread new
-		 * Thread(){ public void run() { while (true) try { new
-		 * Main(sslSocket.accept()); } catch (IOException e) { //
-		 * e.printStackTrace(); } } }.start();
-		 */
-		// use this thread to accept from regular socket
-		while (true)
-			try {
-				new Main(sSocket.accept());
-			} catch (IOException e) {
-				// e.printStackTrace();
-			}
 	}
 
 	private Socket s;
 
 	public Main(Socket s) {
-		System.out.println(s.getInetAddress().getHostName() + " connected to server.\n");
+		System.out.println(s.getInetAddress().getHostName() + " connected to server.");
 		this.s = s;
 		this.start();
 	}
@@ -78,7 +90,7 @@ public class Main extends Thread {
 		try {
 			OutputStream os = s.getOutputStream();
 			InputStream is = s.getInputStream();
-			if (org.moparisthebest.pageplus.plugins.PPServer.useGzip) {
+			if (useGzip) {
 				os = new java.util.zip.GZIPOutputStream(os);
 				is = new java.util.zip.GZIPInputStream(is);
 			}
@@ -92,22 +104,24 @@ public class Main extends Thread {
 				userPassPhone[x] = in.readLine();
 			// userPassPhone[x] = in.readUTF();
 			// for(String st: userPassPhone) System.out.println("st: "+st);
-			PPInfo pp = (PPInfo) new org.moparisthebest.pageplus.plugins.PagePlusHTTP();
+			PPInfo pp = new org.moparisthebest.pageplus.plugins.PagePlusHTTP();
+			Balance balance;
 			try {
-				pp.grabData(userPassPhone);
-			} catch (Exception e) {
+				balance = pp.grabData(userPassPhone);
+				// never send the date, wastes bandwidth and we discard it at client anyhow
+				balance.successDate = null;
+			} catch (Throwable e) {
 				// fudge this to send back exception
-				pp.info = new String[]{"e", e.getMessage()};
+				balance = new Balance().setError(e.getMessage());
+				e.printStackTrace();
 			}
-			for (String st : pp.info)
-				out.write(st + "\n");
+			out.write(balance.compactFormat());
 			// out.writeUTF(st);
 			out.flush();
-			if (org.moparisthebest.pageplus.plugins.PPServer.useGzip)
+			if (useGzip)
 				((GZIPOutputStream) os).finish();
 			s.close();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

@@ -58,6 +58,10 @@
                       android:layout_below="@+id/save" android:id="@+id/pp_only" android:layout_height="wrap_content"
                       android:layout_toRightOf="@+id/TextView01"></CheckBox>
 
+            <Button android:layout_toRightOf="@+id/TextView01" android:id="@+id/sms" android:layout_below="@+id/pp_only"
+                    android:text="@string/sms_grab" android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"></Button>
+
         </RelativeLayout>
 
     </LinearLayout>

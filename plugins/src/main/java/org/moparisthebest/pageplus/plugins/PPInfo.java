@@ -18,15 +18,14 @@
 
 package org.moparisthebest.pageplus.plugins;
 
+import org.moparisthebest.pageplus.dto.Balance;
+
 public abstract class PPInfo {
 
-	public static final String[] names = new String[]{"Balance", "Plan", "Minutes", "SMS", "Data"};
-	public String[] info;
-
-	public void grabData(String[] userPassPhone) throws Exception {
-		this.grabData(userPassPhone[0], userPassPhone[1], userPassPhone[2]);
+	public Balance grabData(String[] userPassPhone) {
+		return this.grabData(userPassPhone[0], userPassPhone[1], userPassPhone[2]);
 	}
 
-	public abstract void grabData(String user, String pass, String phone) throws Exception;
+	public abstract Balance grabData(String user, String pass, String phone);
 
 }
