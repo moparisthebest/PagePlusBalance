@@ -14,3 +14,6 @@ gen/
 .idea/
 *.iml
 *.eml
+
+*.txt
+*.html
