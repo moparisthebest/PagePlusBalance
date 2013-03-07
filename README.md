@@ -27,7 +27,8 @@ Android application icon © cluck's deSiGN studio [CC-BY-SA-3.0 (http://creative
 Changelog
 ----------------------
 0.5.2:  
-     1. New icon custom made for this app by cluck's deSiGN studio and released under CC-BY-SA-3.0, thanks!
+     1. New icon custom made for this app by cluck's deSiGN studio and released under CC-BY-SA-3.0, thanks!  
+     2. Parse balance expiry date from website as well.
 
 0.5.1:  
      1. Page Plus requested I remove the app from the market because I am infringing on their IP, so this update changes the icon.  New icon is © Nevit Dilmen [CC-BY-SA-3.0 or GFDL], via Wikimedia Commons
@@ -88,4 +89,6 @@ Contributors
 
 TODO:
 ----------------------
-1. You suggest it, via a github issue or email!
+1. Page plus sends dates in 3 different formats, '2013-06-21', 'June 21, 2013', and '6/21/2013',
+perhaps parse those and display them in a single format?
+2. You suggest it, via a github issue or email!

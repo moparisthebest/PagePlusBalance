@@ -104,14 +104,17 @@ public class PagePlusHTTP extends PPInfo {
 			}
 
 			//System.out.println("doc: " + doc.html());
-			int index = -1;
 			try {
-				ret.info[++index] = doc.select("span[id=ContentPlaceHolderDefault_mainContentArea_Item2_My Account Summary_5_Registred1_lblBalance]").first().text();
+				ret.setBalance(
+						doc.select("span[id=ContentPlaceHolderDefault_mainContentArea_Item2_My Account Summary_5_Registred1_lblBalance]").first().text(),
+						doc.select("span[id=ContentPlaceHolderDefault_mainContentArea_Item2_My Account Summary_5_Registred1_lblExpiryDate]").first().text()
+				);
 			} catch (Throwable e) {
 				//e.printStackTrace();
 			}
 			try {
 				final Element balance = doc.select("div[id=ContentPlaceHolderDefault_mainContentArea_Item2_My Account Summary_5_Registred1_divBundleDetails]").first();
+				int index = 0;
 				ret.info[++index] = balance.select("tr.tableHeading").first().text();
 				for (Element row : balance.select("tr.odd").first().select("td"))
 					ret.info[++index] = row.text();

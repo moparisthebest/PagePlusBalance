@@ -3,8 +3,11 @@ package org.moparisthebest.pageplus.dto;
 import java.util.Date;
 
 public class Balance {
+	public static final String regexStrip = "^[^:]*: ";
+
 	private static final String[] names = new String[]{"Balance", "Plan", "Minutes", "SMS", "Data"};
-	private static String compactFormatDelim = "\n";
+	private static final String compactFormatDelim = "\n";
+	private static final String format = "%s (Expiring %s)";
 
 	public final String[] info = new String[names.length];
 	public String error = null;
@@ -56,6 +59,20 @@ public class Balance {
 	public Balance copyFrom(Balance lastSuccessful) {
 		System.arraycopy(lastSuccessful.info, 0, this.info, 0, this.info.length);
 		this.successDate = lastSuccessful.successDate;
+		return this;
+	}
+
+	public Balance setBalance(String balance, String date) {
+		this.info[0] = String.format(format,
+				balance == null ? "" : balance.replaceFirst(regexStrip, ""),
+				date == null ? "" : date.replaceFirst(regexStrip, ""));
+		return this;
+	}
+
+	public Balance setPlan(String plan, String date) {
+		this.info[1] = String.format(format,
+				plan == null ? "" : plan.replaceFirst(regexStrip, ""),
+				date == null ? "" : date.replaceFirst(regexStrip, ""));
 		return this;
 	}
 

@@ -7,6 +7,8 @@ import android.os.Bundle;
 import android.telephony.SmsMessage;
 import org.moparisthebest.pageplus.dto.Balance;
 
+import static org.moparisthebest.pageplus.dto.Balance.regexStrip;
+
 public class SMSReceiver extends BroadcastReceiver {
 
 	@Override
@@ -29,15 +31,10 @@ public class SMSReceiver extends BroadcastReceiver {
 				// split string by newlines
 				final String[] msgLines = message.split("\n");
 				final Balance balance = new Balance();
-				final String regexStrip = "^[^:]*: ";
 				// get balance
-				balance.info[0] = String.format("%s (expires %s)",
-						msgLines[0].replaceFirst(regexStrip, ""),
-						msgLines[1].replaceFirst(regexStrip, ""));
+				balance.setBalance(msgLines[0], msgLines[1]);
 				// get plan
-				balance.info[1] = String.format("%s (expires %s)",
-						msgLines[2],
-						msgLines[3].replaceFirst(regexStrip, ""));
+				balance.setPlan(msgLines[2], msgLines[3]);
 				// get minutes
 				balance.info[2] = msgLines[4].replaceFirst(regexStrip, "");
 				// get text

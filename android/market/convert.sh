@@ -8,3 +8,4 @@ convert -background none -resize 48x48\!   ./orig/owl.svg ../res/drawable-mdpi/i
 # screen shots
 convert -resize 480x854\! ./orig/ss1.png ss1.png
 convert -resize 480x854\! ./orig/ss2.png ss2.png
+convert -resize 480x854\! ./orig/ss3.png ss3.png
